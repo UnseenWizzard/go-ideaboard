@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"riedmann.dev/go-ideaboard/internal/ideas"
 	"sort"
 	"strconv"
 	"time"
@@ -14,26 +15,17 @@ import (
 
 var addr = flag.String("addr", ":8080", "http service address")
 
-var templ = template.Must(template.ParseFiles("resources/index.html"))
-
-type idea struct {
-	Id      int
-	Text    string
-	Creator string
-	Votes   int
-}
-
-// TODO: persist
-var ideas = make(map[int]idea)
-var votes = make(map[string]map[int]struct{})
+var templ = template.Must(template.ParseFiles("web/index.html"))
 
 var randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+var idealist = ideas.New()
 
 func main() {
 	flag.Parse()
 	http.Handle("/", http.HandlerFunc(display))
 	http.Handle("/static/custom.css", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "resources/custom.css")
+		http.ServeFile(w, r, "web/static/custom.css")
 	}))
 	// TODO: TLS!
 	err := http.ListenAndServe(*addr, nil) // nosemgrep: go.lang.security.audit.net.use-tls.use-tls
@@ -49,10 +41,10 @@ func display(w http.ResponseWriter, req *http.Request) {
 		c = existingCookie
 	} else {
 		c = &http.Cookie{
-			Name:  "uid",
-			Value: fmt.Sprintf("u_%d", randGen.Intn(64000)),
+			Name:     "uid",
+			Value:    fmt.Sprintf("u_%d", randGen.Intn(64000)),
 			HttpOnly: true,
-			Secure: true,
+			Secure:   true,
 		}
 	}
 
@@ -69,10 +61,7 @@ func display(w http.ResponseWriter, req *http.Request) {
 	}
 	http.SetCookie(w, c)
 
-	var list []idea
-	for _, v := range ideas {
-		list = append(list, v)
-	}
+	list := idealist.GetAll()
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].Votes > list[j].Votes //sort descending
 	})
@@ -86,12 +75,15 @@ func display(w http.ResponseWriter, req *http.Request) {
 func addIdea(req *http.Request, uid string) {
 	// TODO: allow more user input (description, present/idea, who) - in struct and html template
 	id := randGen.Intn(2560)
-	i := idea{
+	i := ideas.Idea{
 		Id:      id,
 		Text:    req.FormValue("idea"),
 		Creator: uid,
 	}
-	ideas[id] = i
+	err := idealist.StoreIdea(i)
+	if err != nil {
+		log.Println("failed to store idea:", err)
+	}
 }
 
 func countVote(req *http.Request) {
@@ -109,19 +101,12 @@ func countVote(req *http.Request) {
 
 	uid := c.Value
 
-	usrVotes, exists := votes[uid]
-	if !exists {
-		usrVotes = make(map[int]struct{})
-	}
-	if _, exists := usrVotes[id]; exists {
-		log.Println("user", uid, "already voted for item", id)
+	votes, err := idealist.StoreVote(uid, id)
+	if err != nil {
+		log.Println("failed to store vote:", err)
 		return
 	}
-	usrVotes[id] = struct{}{}
-	votes[uid] = usrVotes
 
-	if idea, ok := ideas[id]; ok {
-		idea.Votes++
-		ideas[id] = idea
-	}
+	log.Printf("counted %qs vote for idea %d (%d total votes)", uid, id, votes)
+
 }
