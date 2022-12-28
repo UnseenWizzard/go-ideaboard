@@ -52,7 +52,7 @@ func display(w http.ResponseWriter, req *http.Request) {
 	case http.MethodPost:
 		switch req.FormValue("type") {
 		case "input":
-			addIdea(req)
+			addIdea(req, c.Value)
 		case "vote":
 			countVote(req)
 			//TODO display double votes and errors to user
@@ -66,13 +66,13 @@ func display(w http.ResponseWriter, req *http.Request) {
     
 }
 
-func addIdea(req *http.Request) {
+func addIdea(req *http.Request, uid string) {
 	// TODO: allow more user input (description, present/idea, who) - in struct and html template
 	id := randGen.Intn(2560)
 	i := idea {
 		Id: id,
 		Text: req.FormValue("idea"),
-		Creator: req.UserAgent(),
+		Creator: uid,
 	}
 	inputs[id] = i
 }
@@ -81,13 +81,13 @@ func countVote(req *http.Request) {
 	idStr := req.FormValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		fmt.Println("got id that was not an int: ", idStr)
+		log.Println("got id that was not an int: ", idStr)
 		return
 	}
 
 	c, err := req.Cookie("uid")
 	if err != nil {
-		println("failed to get uid cookie: ", err)
+		log.Println("failed to get uid cookie: ", err)
 	}
 
 	uid := c.Value
@@ -97,7 +97,7 @@ func countVote(req *http.Request) {
 		usrVotes = make(map[int]struct{})
 	}
 	if _, exists := usrVotes[id]; exists {
-		fmt.Println("user", uid, "already voted for item", id)
+		log.Println("user", uid, "already voted for item", id)
 		return
 	}
 	usrVotes[id] = struct{}{}
