@@ -32,8 +32,11 @@ var randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 func main() {
 	flag.Parse()
 	http.Handle("/", http.HandlerFunc(display))
-	http.Handle("/static/", http.FileServer(http.Dir("resources/")))
-	err := http.ListenAndServe(*addr, nil)
+	http.Handle("/static/custom.css", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "resources/custom.css")
+	}))
+	// TODO: TLS!
+	err := http.ListenAndServe(*addr, nil) // nosemgrep: go.lang.security.audit.net.use-tls.use-tls
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
@@ -41,11 +44,15 @@ func main() {
 
 func display(w http.ResponseWriter, req *http.Request) {
 
-	c, err := req.Cookie("uid")
-	if err != nil {
+	var c *http.Cookie
+	if existingCookie, err := req.Cookie("uid"); err == nil {
+		c = existingCookie
+	} else {
 		c = &http.Cookie{
 			Name:  "uid",
 			Value: fmt.Sprintf("u_%d", randGen.Intn(64000)),
+			HttpOnly: true,
+			Secure: true,
 		}
 	}
 
@@ -56,7 +63,7 @@ func display(w http.ResponseWriter, req *http.Request) {
 			addIdea(req, c.Value)
 		case "vote":
 			countVote(req)
-			// display double votes and errors to user
+			// TODO display double votes and errors to user
 		}
 		// TODO allow deletion of my own ideas
 	}
@@ -69,7 +76,10 @@ func display(w http.ResponseWriter, req *http.Request) {
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].Votes > list[j].Votes //sort descending
 	})
-	templ.Execute(w, list)
+	err := templ.Execute(w, list)
+	if err != nil {
+		log.Println("failed to execute template: ", err)
+	}
 
 }
 
