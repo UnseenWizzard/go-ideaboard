@@ -1,16 +1,17 @@
 package main
 
 import (
-    "flag"
-    "html/template"
-    "log"
-    "net/http"
+	"flag"
+	"fmt"
+	"html/template"
+	"log"
 	"math/rand"
-	"time"
+	"net/http"
 	"strconv"
+	"time"
 )
 
-var addr = flag.String("addr", ":8080", "http service address") // Q=17, R=18
+var addr = flag.String("addr", ":8080", "http service address")
 
 var templ = template.Must(template.New("list").Parse(templateStr))
 
@@ -22,6 +23,8 @@ type idea struct {
 }
 
 var inputs = make(map[int]idea)
+var votes = make(map[string]map[int]struct{})
+
 var randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func main() {
@@ -34,23 +37,26 @@ func main() {
 }
 
 func display(w http.ResponseWriter, req *http.Request) {
+
+	c, err := req.Cookie("uid")
+	if err != nil {
+		c = &http.Cookie{
+			Name: "uid",
+			Value: fmt.Sprintf("u_%d",randGen.Intn(64000)),
+		}
+	}
+
 	switch req.Method {
 	case http.MethodPost:
 		switch req.FormValue("type") {
 		case "input":
 			addIdea(req)
 		case "vote":
-			idStr := req.FormValue("id")
-			id, err := strconv.Atoi(idStr)
-			if err != nil {
-				break
-			}
-			if idea, ok := inputs[id]; ok {
-				idea.Votes++
-				inputs[id] = idea
-			}
+			countVote(req)
+			//TODO display double votes and errors to user
 		}
 	}
+	http.SetCookie(w, c)
 	templ.Execute(w, inputs)
     
 }
@@ -63,6 +69,38 @@ func addIdea(req *http.Request) {
 		Creator: req.UserAgent(),
 	}
 	inputs[id] = i
+}
+
+func countVote(req *http.Request) {
+	idStr := req.FormValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		fmt.Println("got id that was not an int: ", idStr)
+		return
+	}
+
+	c, err := req.Cookie("uid")
+	if err != nil {
+		println("failed to get uid cookie: ", err)
+	}
+
+	uid := c.Value
+
+	usrVotes, exists := votes[uid]
+	if !exists {
+		usrVotes = make(map[int]struct{})
+	}
+	if _, exists := usrVotes[id]; exists {
+		fmt.Println("user", uid, "already voted for item", id)
+		return
+	}
+	usrVotes[id] = struct{}{}
+	votes[uid] = usrVotes
+
+	if idea, ok := inputs[id]; ok {
+		idea.Votes++
+		inputs[id] = idea
+	}
 }
 
 const templateStr = `
