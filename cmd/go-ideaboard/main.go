@@ -73,12 +73,19 @@ func display(w http.ResponseWriter, req *http.Request) {
 }
 
 func addIdea(req *http.Request, uid string) {
-	// TODO: allow more user input (description, present/idea, who) - in struct and html template
 	id := randGen.Intn(2560)
+
+	hasSpeaker := false
+	if req.FormValue("hasSpeaker") == "on" {
+		hasSpeaker = true
+	}
+
 	i := ideas.Idea{
-		Id:      id,
-		Text:    req.FormValue("idea"),
-		Creator: uid,
+		Id:          id,
+		Text:        req.FormValue("idea"),
+		Description: req.FormValue("details"),
+		HasSpeaker:  hasSpeaker,
+		Creator:     uid,
 	}
 	err := idealist.StoreIdea(i)
 	if err != nil {

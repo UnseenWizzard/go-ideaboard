@@ -14,14 +14,26 @@
 
             <h6 class="mb-3">Go Idea Board</h6>
 
-            <!-- TODO: do nicer form input with place for text https://getbootstrap.com/docs/5.3/forms/form-control/ -->
-            <form action="/" method="POST" class="d-flex justify-content-center align-items-center mb-4">
-              <div class="form-outline flex-fill">
-                <input type="text" id="idea" name="idea" value="" title="Idea to add" class="form-control form-control-lg" />
+            <form action="/" method="POST" class="form-row justify-content-center align-items-center mb-4">
+              <div class="form-group">
+                <label for="ideaInput">Meetup/Talk Idea</label>
+                <input type="text" class="form-control" id="ideaInput" name="idea" aria-describedby="ideaHelp" placeholder="Your Idea">
+                <small id="ideaHelp" class="form-text text-muted">What would you like to talk/hear about?</small>
               </div>
-			  <input type="hidden" name="type" value="input" />
-              <button type="submit" class="btn btn-primary btn-lg ms-2">Add</button>
+              <div class="form-group">
+                <label for="detailsInput">Details</label>
+                <input type="textarea" class="form-control" id="detailsInput" name="details" aria-describedby="detailsHelp" placeholder="What/Who/How...">
+                <small id="detailsHelp" class="form-text text-muted">Tell us some more about that idea</small>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="hasSpeaker" name="hasSpeaker">
+                <label class="form-check-label" for="hasSpeaker">I would like to give this talk</label>
+              </div>
+			        <input type="hidden" name="type" value="input" />
+              <button type="submit" class="btn btn-primary btn-lg ms-10">Add</button>
             </form>
+
+            <hr />
 
             <ul class="list-group mb-0">
 			{{ range . }}
@@ -29,7 +41,10 @@
                 class="list-group-item d-flex justify-content-between align-items-start border-start-0 border-top-0 border-end-0 border-bottom rounded-0 mb-2">
 				<div class="ms-2 me-auto">
 					<div class="fw-bold">{{.Text}}</div>
-					 {{.Creator}} 
+          <div class="text-muted">{{.Description}}</div>
+          {{ if not .HasSpeaker }} 
+          <span class="badge bg-warning rounded-pill">Speaker Needed</span>
+          {{ end }}
 			  	</div>
 			  	<span class="badge bg-primary rounded-pill">{{.Votes}}</span>
 				<form action="/" method="POST">
