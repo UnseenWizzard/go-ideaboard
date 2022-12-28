@@ -6,10 +6,6 @@ name: Commit Compliance
 on:
   pull_request:
     branches: [ main ]
-  push:
-    branches: [ main ]
-permissions:
-  contents: read
 jobs:
   validate-commits:
     runs-on: ubuntu-latest
