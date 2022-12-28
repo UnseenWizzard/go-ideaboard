@@ -1,0 +1,23 @@
+name: "CI"
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+permissions:
+  contents: read
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '~1.19'
+      - uses: actions/checkout@v3
+      - name: build
+        run: go build ./...
+      - name: test
+        run: go test ./...
+      - name: static analysis
+        uses: golangci/golangci-lint-action@v3
