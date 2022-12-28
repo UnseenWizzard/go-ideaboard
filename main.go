@@ -62,7 +62,6 @@ func display(w http.ResponseWriter, req *http.Request) {
 	}
 	http.SetCookie(w, c)
 
-	// TODO sort by votes
 	var list []idea
 	for _, v := range ideas {
 		list = append(list, v)
