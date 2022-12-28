@@ -17,10 +17,10 @@ var addr = flag.String("addr", ":8080", "http service address")
 var templ = template.Must(template.ParseFiles("resources/index.html"))
 
 type idea struct {
-	Id int
-	Text string
+	Id      int
+	Text    string
 	Creator string
-	Votes int
+	Votes   int
 }
 
 // TODO: persist
@@ -30,13 +30,13 @@ var votes = make(map[string]map[int]struct{})
 var randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func main() {
-    flag.Parse()
-    http.Handle("/", http.HandlerFunc(display))
+	flag.Parse()
+	http.Handle("/", http.HandlerFunc(display))
 	http.Handle("/static/", http.FileServer(http.Dir("resources/")))
-    err := http.ListenAndServe(*addr, nil)
-    if err != nil {
-        log.Fatal("ListenAndServe:", err)
-    }
+	err := http.ListenAndServe(*addr, nil)
+	if err != nil {
+		log.Fatal("ListenAndServe:", err)
+	}
 }
 
 func display(w http.ResponseWriter, req *http.Request) {
@@ -44,8 +44,8 @@ func display(w http.ResponseWriter, req *http.Request) {
 	c, err := req.Cookie("uid")
 	if err != nil {
 		c = &http.Cookie{
-			Name: "uid",
-			Value: fmt.Sprintf("u_%d",randGen.Intn(64000)),
+			Name:  "uid",
+			Value: fmt.Sprintf("u_%d", randGen.Intn(64000)),
 		}
 	}
 
@@ -56,7 +56,7 @@ func display(w http.ResponseWriter, req *http.Request) {
 			addIdea(req, c.Value)
 		case "vote":
 			countVote(req)
-			//TODO display double votes and errors to user
+			// display double votes and errors to user
 		}
 		// TODO allow deletion of my own ideas
 	}
@@ -71,15 +71,15 @@ func display(w http.ResponseWriter, req *http.Request) {
 		return list[i].Votes > list[j].Votes //sort descending
 	})
 	templ.Execute(w, list)
-    
+
 }
 
 func addIdea(req *http.Request, uid string) {
 	// TODO: allow more user input (description, present/idea, who) - in struct and html template
 	id := randGen.Intn(2560)
-	i := idea {
-		Id: id,
-		Text: req.FormValue("idea"),
+	i := idea{
+		Id:      id,
+		Text:    req.FormValue("idea"),
 		Creator: uid,
 	}
 	ideas[id] = i
