@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/unseenwizzard/go-ideaboard/internal/ideas"
 	"html/template"
 	"log"
 	"math/rand"
 	"net/http"
-	"riedmann.dev/go-ideaboard/internal/ideas"
 	"sort"
 	"strconv"
 	"time"
