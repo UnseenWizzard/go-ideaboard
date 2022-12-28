@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -23,7 +24,7 @@ type idea struct {
 }
 
 // TODO: persist
-var inputs = make(map[int]idea)
+var ideas = make(map[int]idea)
 var votes = make(map[string]map[int]struct{})
 
 var randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -62,7 +63,14 @@ func display(w http.ResponseWriter, req *http.Request) {
 	http.SetCookie(w, c)
 
 	// TODO sort by votes
-	templ.Execute(w, inputs)
+	var list []idea
+	for _, v := range ideas {
+		list = append(list, v)
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Votes > list[j].Votes //sort descending
+	})
+	templ.Execute(w, list)
     
 }
 
@@ -74,7 +82,7 @@ func addIdea(req *http.Request, uid string) {
 		Text: req.FormValue("idea"),
 		Creator: uid,
 	}
-	inputs[id] = i
+	ideas[id] = i
 }
 
 func countVote(req *http.Request) {
@@ -103,8 +111,8 @@ func countVote(req *http.Request) {
 	usrVotes[id] = struct{}{}
 	votes[uid] = usrVotes
 
-	if idea, ok := inputs[id]; ok {
+	if idea, ok := ideas[id]; ok {
 		idea.Votes++
-		inputs[id] = idea
+		ideas[id] = idea
 	}
 }
