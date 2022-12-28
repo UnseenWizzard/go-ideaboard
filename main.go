@@ -31,6 +31,7 @@ var randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 func main() {
     flag.Parse()
     http.Handle("/", http.HandlerFunc(display))
+	http.Handle("/static/", http.FileServer(http.Dir("resources/")))
     err := http.ListenAndServe(*addr, nil)
     if err != nil {
         log.Fatal("ListenAndServe:", err)
