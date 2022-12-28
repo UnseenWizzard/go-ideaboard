@@ -22,6 +22,7 @@ type idea struct {
 	Votes int
 }
 
+// TODO: persist
 var inputs = make(map[int]idea)
 var votes = make(map[string]map[int]struct{})
 
@@ -55,13 +56,17 @@ func display(w http.ResponseWriter, req *http.Request) {
 			countVote(req)
 			//TODO display double votes and errors to user
 		}
+		// TODO allow deletion of my own ideas
 	}
 	http.SetCookie(w, c)
+
+	// TODO sort by votes
 	templ.Execute(w, inputs)
     
 }
 
 func addIdea(req *http.Request) {
+	// TODO: allow more user input (description, present/idea, who) - in struct and html template
 	id := randGen.Intn(2560)
 	i := idea {
 		Id: id,
