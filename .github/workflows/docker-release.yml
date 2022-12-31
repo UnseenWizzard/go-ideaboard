@@ -1,0 +1,33 @@
+name: Docker Image Release
+
+on:
+  push:
+    tags: [ "v*" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: unseenwizzard/go-ideaboard
+
+jobs:
+
+  docker-release:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get Release Version
+      run:  echo "version=$(echo '${{github.ref_name}}' | cut -d 'v' -f 2)" >> $GITHUB_ENV
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Release the Docker image
+      run: |
+        docker build . --file Dockerfile --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.version }}
+        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.version }}
