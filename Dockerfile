@@ -1,5 +1,8 @@
 FROM golang:1.19-alpine
 
+RUN addgroup ideator && adduser -s /bin/false -G ideator -D ideator
+USER ideator
+
 WORKDIR /app/
 
 COPY go.mod .
