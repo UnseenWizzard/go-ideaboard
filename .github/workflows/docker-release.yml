@@ -29,5 +29,9 @@ jobs:
 
     - name: Release the Docker image
       run: |
-        docker build . --file Dockerfile --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.version }}
-        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.version }}
+        docker buildx create --name builder
+        docker buildx use builder
+        docker buildx build --platform linux/amd64 --file Dockerfile --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.version }}-amd64 .
+        docker buildx build --platform linux/arm64 --file Dockerfile --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.version }}-arm64 .
+        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.version }}-amd64
+        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.version }}-arm64
