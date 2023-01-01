@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: go-ideaboard
-        image: ghcr.io/unseenwizzard/go-ideaboard:0.1.3-arm64
+        image: ghcr.io/unseenwizzard/go-ideaboard:0.1.4-arm64
         command: ["/app/go-ideaboard"]
         args: ["-basepath", "/ideas/"]
         ports:
