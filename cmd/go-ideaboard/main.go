@@ -23,9 +23,10 @@ var randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 var idealist = ideas.New()
 
 type templateArgs struct {
+	BasePath   string
 	CreatePath string
-	VotePath string
-	Ideas []ideas.Idea
+	VotePath   string
+	Ideas      []ideas.Idea
 }
 
 func main() {
@@ -73,10 +74,11 @@ func display(w http.ResponseWriter, req *http.Request) {
 		return list[i].Votes > list[j].Votes //sort descending
 	})
 
-	args := templateArgs {
+	args := templateArgs{
+		BasePath:   *basepath,
 		CreatePath: *basepath,
-		VotePath: *basepath,
-		Ideas: list,
+		VotePath:   *basepath,
+		Ideas:      list,
 	}
 
 	err := templ.Execute(w, args)
