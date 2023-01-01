@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: go-ideaboard-ingress
+  namespace: ideaboard
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "ideaboard-rewritepath@kubernetescrd"
+
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  rules:
+  - http:
+      paths:
+      - pathType: Prefix
+        path: "/ideas"
+        backend:
+          service:
+            name: ideaboard-svc
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - k8s.riedmann.dev
+    secretName: go-ideaboard-ingress-cert
+
+--- 
+
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: rewritepath
+  namespace: ideaboard
+spec:
+  replacePathRegex:
+    regex: /ideas(/|$)(.*)
+    replacement: /$2

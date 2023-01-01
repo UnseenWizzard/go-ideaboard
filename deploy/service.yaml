@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ideaboard-svc
+  namespace: ideaboard
+spec:
+  selector:
+    app.kubernetes.io/name: ideaboard
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080
