@@ -1,67 +1,73 @@
 <html>
+
 <head>
-<title>Go Idea Board</title>
-<link href="static/custom.css" rel="stylesheet" />
+  <title>Go Idea Board</title>
+  <link href="static/custom.css" rel="stylesheet" />
 </head>
+
 <body>
-<section class="vh-100" style="background-color: #000;">
-  <div class="container py-5 h-100">
-    <div class="row d-flex justify-content-center align-items-center h-100">
-      <div class="col col-xl-10">
+  <section class="vh-100" style="background-color: #000;">
+    <div class="container py-5 h-100">
+      <div class="row d-flex justify-content-center align-items-center h-100">
+        <div class="col col-xl-10">
 
-        <div class="card" style="border-radius: 15px;">
-          <div class="card-body p-5">
+          <div class="card" style="border-radius: 15px;">
+            <div class="card-body p-5">
 
-            <h6 class="mb-3">Go Idea Board</h6>
+              <h6 class="mb-3">Go Idea Board</h6>
 
-            <form action="/" method="POST" class="form-row justify-content-center align-items-center mb-4">
-              <div class="form-group">
-                <label for="ideaInput">Meetup/Talk Idea</label>
-                <input type="text" class="form-control" id="ideaInput" name="idea" aria-describedby="ideaHelp" placeholder="Your Idea">
-                <small id="ideaHelp" class="form-text text-muted">What would you like to talk/hear about?</small>
-              </div>
-              <div class="form-group">
-                <label for="detailsInput">Details</label>
-                <input type="textarea" class="form-control" id="detailsInput" name="details" aria-describedby="detailsHelp" placeholder="What/Who/How...">
-                <small id="detailsHelp" class="form-text text-muted">Tell us some more about that idea</small>
-              </div>
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="hasSpeaker" name="hasSpeaker">
-                <label class="form-check-label" for="hasSpeaker">I would like to give this talk</label>
-              </div>
-			        <input type="hidden" name="type" value="input" />
-              <button type="submit" class="btn btn-primary btn-lg ms-10">Add</button>
-            </form>
+              <form action="{{.CreatePath}}" method="POST"
+                class="form-row justify-content-center align-items-center mb-4">
+                <div class="form-group">
+                  <label for="ideaInput">Meetup/Talk Idea</label>
+                  <input type="text" class="form-control" id="ideaInput" name="idea" aria-describedby="ideaHelp"
+                    placeholder="Your Idea">
+                  <small id="ideaHelp" class="form-text text-muted">What would you like to talk/hear about?</small>
+                </div>
+                <div class="form-group">
+                  <label for="detailsInput">Details</label>
+                  <input type="textarea" class="form-control" id="detailsInput" name="details"
+                    aria-describedby="detailsHelp" placeholder="What/Who/How...">
+                  <small id="detailsHelp" class="form-text text-muted">Tell us some more about that idea</small>
+                </div>
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="hasSpeaker" name="hasSpeaker">
+                  <label class="form-check-label" for="hasSpeaker">I would like to give this talk</label>
+                </div>
+                <input type="hidden" name="type" value="input" />
+                <button type="submit" class="btn btn-primary btn-lg ms-10">Add</button>
+              </form>
 
-            <hr />
+              <hr />
 
-            <ul class="list-group mb-0">
-			{{ range . }}
-              <li
-                class="list-group-item d-flex justify-content-between align-items-start border-start-0 border-top-0 border-end-0 border-bottom rounded-0 mb-2">
-				<div class="ms-2 me-auto">
-					<div class="fw-bold">{{.Text}}</div>
-          <div class="text-muted">{{.Description}}</div>
-          {{ if not .HasSpeaker }} 
-          <span class="badge bg-warning rounded-pill">Speaker Needed</span>
-          {{ end }}
-			  	</div>
-			  	<span class="badge bg-primary rounded-pill">{{.Votes}}</span>
-				<form action="/" method="POST">
-					<input type="hidden" name="id" value="{{.Id}}" />
-					<input type="hidden" name="type" value="vote" />
-				  	<button type="sumbit" class="btn btn-primary btn-sm ms-2">Vote</button>
-				</form>
-              </li>
-			{{ end }}
-            </ul>
+              <ul class="list-group mb-0">
+                {{ range .Ideas }}
+                <li
+                  class="list-group-item d-flex justify-content-between align-items-start border-start-0 border-top-0 border-end-0 border-bottom rounded-0 mb-2">
+                  <div class="ms-2 me-auto">
+                    <div class="fw-bold">{{.Text}}</div>
+                    <div class="text-muted">{{.Description}}</div>
+                    {{ if not .HasSpeaker }}
+                    <span class="badge bg-warning rounded-pill">Speaker Needed</span>
+                    {{ end }}
+                  </div>
+                  <span class="badge bg-primary rounded-pill">{{.Votes}}</span>
+                  <form action="{{$.VotePath}}" method="POST">
+                    <input type="hidden" name="id" value="{{.Id}}" />
+                    <input type="hidden" name="type" value="vote" />
+                    <button type="sumbit" class="btn btn-primary btn-sm ms-2">Vote</button>
+                  </form>
+                </li>
+                {{ end }}
+              </ul>
 
+            </div>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 </body>
+
 </html>

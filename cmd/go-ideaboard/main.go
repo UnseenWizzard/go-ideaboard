@@ -14,12 +14,19 @@ import (
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
+var basepath = flag.String("basepath", "/", "base path of service")
 
 var templ = template.Must(template.ParseFiles("web/index.html"))
 
 var randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 var idealist = ideas.New()
+
+type templateArgs struct {
+	CreatePath string
+	VotePath string
+	Ideas []ideas.Idea
+}
 
 func main() {
 	flag.Parse()
@@ -65,7 +72,14 @@ func display(w http.ResponseWriter, req *http.Request) {
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].Votes > list[j].Votes //sort descending
 	})
-	err := templ.Execute(w, list)
+
+	args := templateArgs {
+		CreatePath: *basepath,
+		VotePath: *basepath,
+		Ideas: list,
+	}
+
+	err := templ.Execute(w, args)
 	if err != nil {
 		log.Println("failed to execute template: ", err)
 	}
