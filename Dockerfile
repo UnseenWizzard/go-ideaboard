@@ -1,6 +1,6 @@
 FROM golang:1.19-alpine
 
-RUN addgroup ideator && adduser -s /bin/false -G ideator -D ideator
+RUN addgroup 1000 && adduser -s /bin/false -G 1000 -D 1000
 
 WORKDIR /app/
 
@@ -13,9 +13,8 @@ COPY web/ ./web
 
 RUN go build -o go-ideaboard ./cmd/go-ideaboard
 
-RUN chown -R ideator:ideator /app/go-ideaboard
-RUN chmod +x /app/go-ideaboard
-USER ideator
+RUN chmod a+x /app/go-ideaboard
+USER 1000
 
 EXPOSE 8080
 
