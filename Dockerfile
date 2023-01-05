@@ -5,6 +5,7 @@ RUN addgroup 1000 && adduser -s /bin/false -G 1000 -D 1000
 WORKDIR /app/
 
 COPY go.mod .
+COPY go.sum .
 RUN go mod download
 
 COPY cmd/ ./cmd
