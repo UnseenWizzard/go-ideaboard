@@ -20,7 +20,7 @@ var templ = template.Must(template.ParseFiles("web/index.html"))
 
 var randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-var idealist = ideas.New()
+var idealist = ideas.NewInMemoryPersistence()
 
 type templateArgs struct {
 	BasePath   string
@@ -35,7 +35,7 @@ func main() {
 	http.Handle("/static/custom.css", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "web/static/custom.css")
 	}))
-	// TODO: TLS!
+
 	err := http.ListenAndServe(*addr, nil) // nosemgrep: go.lang.security.audit.net.use-tls.use-tls
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)

@@ -2,26 +2,33 @@ package ideas
 
 import "fmt"
 
-type inMemoryPersistence struct {
-	ideas map[int]Idea
-	votes map[string]map[int]struct{}
+type InMemoryPersistence struct {
+	Ideas map[int]Idea
+	Votes map[string]map[int]struct{}
 }
 
-func (p inMemoryPersistence) GetAll() []Idea {
+func NewInMemoryPersistence() InMemoryPersistence {
+	return InMemoryPersistence{
+		Ideas: make(map[int]Idea),
+		Votes: make(map[string]map[int]struct{}),
+	}
+}
+
+func (p InMemoryPersistence) GetAll() []Idea {
 	var list []Idea
-	for _, v := range p.ideas {
+	for _, v := range p.Ideas {
 		list = append(list, v)
 	}
 	return list
 }
 
-func (p inMemoryPersistence) StoreIdea(idea Idea) error {
-	p.ideas[idea.Id] = idea
+func (p InMemoryPersistence) StoreIdea(idea Idea) error {
+	p.Ideas[idea.Id] = idea
 	return nil
 }
 
-func (p inMemoryPersistence) StoreVote(userId string, ideaId int) (votes int, err error) {
-	usrVotes, exists := p.votes[userId]
+func (p InMemoryPersistence) StoreVote(userId string, ideaId int) (votes int, err error) {
+	usrVotes, exists := p.Votes[userId]
 	if !exists {
 		usrVotes = make(map[int]struct{})
 	}
@@ -29,15 +36,15 @@ func (p inMemoryPersistence) StoreVote(userId string, ideaId int) (votes int, er
 		return 0, fmt.Errorf("user %q already voted for idea %d", userId, ideaId)
 	}
 	usrVotes[ideaId] = struct{}{}
-	p.votes[userId] = usrVotes
+	p.Votes[userId] = usrVotes
 
-	idea, ok := p.ideas[ideaId]
+	idea, ok := p.Ideas[ideaId]
 	if !ok {
 		return 0, fmt.Errorf("idea %d does not exist", ideaId)
 	}
 
 	idea.Votes++
-	p.ideas[ideaId] = idea
+	p.Ideas[ideaId] = idea
 
 	return idea.Votes, nil
 }
