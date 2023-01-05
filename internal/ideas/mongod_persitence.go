@@ -14,6 +14,24 @@ type Vote struct {
 	IdeaID int    `bson:"idea_id"`
 }
 
+type PersistenceError struct {
+	Msg string
+	Err error
+}
+
+func (e *PersistenceError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Msg, e.Err.Error())
+}
+
+type DuplicateVoteError struct {
+	User   string
+	IdeaID int
+}
+
+func (e *DuplicateVoteError) Error() string {
+	return fmt.Sprintf("user %q has already voted on idea %d", e.User, e.IdeaID)
+}
+
 type MongoDBPersistence struct {
 	client *mongo.Client
 }
@@ -43,7 +61,7 @@ func (m *MongoDBPersistence) GetAll() ([]Idea, error) {
 	coll := m.client.Database("idea_board").Collection("ideas")
 	cur, err := coll.Find(context.TODO(), bson.D{})
 	if err != nil {
-		return []Idea{}, fmt.Errorf("failed query ideas: %w", err)
+		return []Idea{}, &PersistenceError{Msg: "failed to query ideas", Err: err}
 	}
 
 	var ideas []Idea
@@ -58,7 +76,7 @@ func (m *MongoDBPersistence) StoreIdea(idea Idea) error {
 	coll := m.client.Database("idea_board").Collection("ideas")
 	result, err := coll.InsertOne(context.TODO(), idea)
 	if err != nil {
-		return err
+		return &PersistenceError{Msg: "failed to store idea", Err: err}
 	}
 	fmt.Printf("Inserted document with id: %v\n", result.InsertedID)
 	return nil
@@ -79,19 +97,19 @@ func (m *MongoDBPersistence) StoreVote(userId string, ideaId int) (votes int, er
 	if existingVote.Err() != mongo.ErrNoDocuments {
 		var v bson.D
 		existingVote.Decode(&v)
-		return 0, fmt.Errorf("user %q already voted for idea %d: %v", userId, ideaId, v)
+		return 0, &DuplicateVoteError{User: userId, IdeaID: ideaId}
 	}
 
 	voteRes, err := votesColl.InsertOne(context.TODO(), vote)
 	if err != nil {
-		return 0, fmt.Errorf("failed to store vote %v: %w", vote, err)
+		return 0, &PersistenceError{Msg: fmt.Sprintf("failed to store vote %v", vote), Err: err}
 	}
 	fmt.Printf("Stored vote %v with document id: %v\n", vote, voteRes.InsertedID)
 
 	incrementVotes := bson.D{{"$inc", bson.D{{"votes", 1}}}}
 	_, err = ideas.UpdateOne(context.TODO(), idFilter, incrementVotes)
 	if err != nil {
-		return 0, fmt.Errorf("failed to count vote %v: %w", vote, err)
+		return 0, &PersistenceError{Msg: fmt.Sprintf("failed to count vote %v", vote), Err: err}
 	}
 
 	return 0, nil
