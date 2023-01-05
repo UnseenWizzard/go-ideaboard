@@ -73,7 +73,7 @@ func display(w http.ResponseWriter, req *http.Request) {
 	case http.MethodPost:
 		switch req.FormValue("type") {
 		case "input":
-			addIdea(req, c.Value)
+			actionErr = addIdea(req, c.Value)
 		case "vote":
 			actionErr = countVote(req)
 		}
@@ -107,7 +107,12 @@ func display(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func addIdea(req *http.Request, uid string) {
+func addIdea(req *http.Request, uid string) error {
+	text := req.FormValue("idea")
+	if text == "" {
+		return fmt.Errorf("idea is missing text")
+	}
+
 	id := randGen.Intn(2560)
 
 	hasSpeaker := false
@@ -117,15 +122,17 @@ func addIdea(req *http.Request, uid string) {
 
 	i := ideas.Idea{
 		Id:          id,
-		Text:        req.FormValue("idea"),
+		Text:        text,
 		Description: req.FormValue("details"),
 		HasSpeaker:  hasSpeaker,
 		Creator:     uid,
 	}
 	err := idealist.StoreIdea(i)
 	if err != nil {
-		log.Println("failed to store idea:", err)
+		return fmt.Errorf("failed to store idea: %w", err)
 	}
+
+	return nil
 }
 
 func countVote(req *http.Request) error {
