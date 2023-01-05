@@ -3,14 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/unseenwizzard/go-ideaboard/internal/ideas"
 	"html/template"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/unseenwizzard/go-ideaboard/internal/ideas"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
@@ -20,7 +22,7 @@ var templ = template.Must(template.ParseFiles("web/index.html"))
 
 var randGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-var idealist = ideas.NewInMemoryPersistence()
+var idealist ideas.MongoDBPersistence
 
 type templateArgs struct {
 	BasePath   string
@@ -31,14 +33,22 @@ type templateArgs struct {
 
 func main() {
 	flag.Parse()
+
+	uri := os.Getenv("MONGODB_CONNECTION_URI")
+	var err error
+	idealist, err = ideas.NewMongoDBPersistence(uri)
+	if err != nil {
+		log.Fatal("MongoDB connection err: ", err)
+	}
+
 	http.Handle("/", http.HandlerFunc(display))
 	http.Handle("/static/custom.css", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "web/static/custom.css")
 	}))
 
-	err := http.ListenAndServe(*addr, nil) // nosemgrep: go.lang.security.audit.net.use-tls.use-tls
+	err = http.ListenAndServe(*addr, nil) // nosemgrep: go.lang.security.audit.net.use-tls.use-tls
 	if err != nil {
-		log.Fatal("ListenAndServe:", err)
+		log.Fatal("ListenAndServe: ", err)
 	}
 }
 
@@ -69,7 +79,10 @@ func display(w http.ResponseWriter, req *http.Request) {
 	}
 	http.SetCookie(w, c)
 
-	list := idealist.GetAll()
+	list, err := idealist.GetAll()
+	if err != nil {
+		log.Println("failed to get existing ideas: ", err)
+	}
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].Votes > list[j].Votes //sort descending
 	})
@@ -81,7 +94,7 @@ func display(w http.ResponseWriter, req *http.Request) {
 		Ideas:      list,
 	}
 
-	err := templ.Execute(w, args)
+	err = templ.Execute(w, args)
 	if err != nil {
 		log.Println("failed to execute template: ", err)
 	}
