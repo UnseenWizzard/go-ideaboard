@@ -84,7 +84,7 @@ func (m *MongoDBPersistence) StoreIdea(idea Idea) error {
 
 func (m *MongoDBPersistence) StoreVote(userId string, ideaId int) (votes int, err error) {
 	ideas := m.client.Database("idea_board").Collection("ideas")
-	idFilter := bson.D{{"id", ideaId}}
+	idFilter := bson.D{{Key: "id", Value: ideaId}}
 	idea := ideas.FindOne(context.TODO(), idFilter)
 	if idea == nil {
 		return 0, fmt.Errorf("idea %d does not exist", ideaId)
@@ -95,8 +95,6 @@ func (m *MongoDBPersistence) StoreVote(userId string, ideaId int) (votes int, er
 	votesColl := m.client.Database("idea_board").Collection("votes")
 	existingVote := votesColl.FindOne(context.TODO(), vote)
 	if existingVote.Err() != mongo.ErrNoDocuments {
-		var v bson.D
-		existingVote.Decode(&v)
 		return 0, &DuplicateVoteError{User: userId, IdeaID: ideaId}
 	}
 
@@ -106,7 +104,7 @@ func (m *MongoDBPersistence) StoreVote(userId string, ideaId int) (votes int, er
 	}
 	fmt.Printf("Stored vote %v with document id: %v\n", vote, voteRes.InsertedID)
 
-	incrementVotes := bson.D{{"$inc", bson.D{{"votes", 1}}}}
+	incrementVotes := bson.D{{Key: "$inc", Value: bson.D{{Key: "votes", Value: 1}}}}
 	_, err = ideas.UpdateOne(context.TODO(), idFilter, incrementVotes)
 	if err != nil {
 		return 0, &PersistenceError{Msg: fmt.Sprintf("failed to count vote %v", vote), Err: err}
